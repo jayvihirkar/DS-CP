@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shortest Distance - Pune VIT Region</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .control-group select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            margin-top: 10px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .path-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .path-list li {
+            padding: 8px;
+            background: white;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .path-list li:before {
+            content: "📍";
+            font-size: 1.2rem;
+        }
+
+        .distance {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #764ba2;
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .map-container {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+        }
+
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: auto;
+        }
+
+        .legend h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .legend-marker {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #f66;
+            padding: 15px;
+            border-radius: 8px;
+            color: #c00;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗺️ Shortest Distance Calculator</h1>
+        <p>Pune VIT Region | Dijkstra's Algorithm</p>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="control-group">
+                <label for="startLocation">📍 Starting Location</label>
+                <select id="startLocation"></select>
+            </div>
+
+            <div class="control-group">
+                <label for="endLocation">🎯 Destination</label>
+                <select id="endLocation"></select>
+            </div>
+
+            <button class="btn" id="findPathBtn">🚀 Find Shortest Path</button>
+            <button class="btn" onclick="clearMap()" style="background: #f66;">🗑️ Clear Map</button>
+
+            <div class="results" id="results"></div>
+
+            <div class="legend">
+                <h4>Legend</h4>
+                <div class="legend-item">
+                    <span class="legend-marker" style="background: #667eea;"></span>
+                    <span>Starting Point</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker" style="background: #764ba2;"></span>
+                    <span>Destination</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker" style="background: #0f0;"></span>
+                    <span>Path</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker" style="background: #333;"></span>
+                    <span>Other Locations</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        let map;
+        let markers = [];
+        let polyline = null;
+        let routingControl = null;
+        let locations = {};
+
+        // Initialize map centered on Pune
+        function initMap() {
+            map = L.map('map').setView([18.5204, 73.8567], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            loadLocations();
+        }
+
+        // Load all locations from API
+        async function loadLocations() {
+            try {
+                const response = await fetch('/api/locations');
+                locations = await response.json();
+
+                // Populate dropdowns
+                const startSelect = document.getElementById('startLocation');
+                const endSelect = document.getElementById('endLocation');
+
+                for (const name in locations) {
+                    const option1 = document.createElement('option');
+                    const option2 = document.createElement('option');
+                    option1.value = name;
+                    option1.textContent = name;
+                    option2.value = name;
+                    option2.textContent = name;
+                    startSelect.appendChild(option1);
+                    endSelect.appendChild(option2);
+                }
+
+                // Add markers for all locations
+                for (const name in locations) {
+                    const marker = L.marker([locations[name].lat, locations[name].lng])
+                        .addTo(map)
+                        .bindPopup(name);
+
+                    markers.push({
+                        name: name,
+                        marker: marker,
+                        lat: locations[name].lat,
+                        lng: locations[name].lng
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading locations:', error);
+                document.getElementById('results').innerHTML = 
+                    '<div class="error">Failed to load locations. Make sure the server is running.</div>';
+            }
+        }
+
+        // Find shortest path
+        async function findShortestPath() {
+            const start = document.getElementById('startLocation').value;
+            const end = document.getElementById('endLocation').value;
+
+            if (!start || !end) {
+                document.getElementById('results').innerHTML = 
+                    '<div class="error">Please select both start and end locations</div>';
+                return;
+            }
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="loading">Finding shortest path...</div>';
+            document.getElementById('findPathBtn').disabled = true;
+
+            try {
+                const response = await fetch('/api/shortest-path', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ start, end })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result, start, end);
+                    visualizePath(result.path);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Error: ${result.error || 'No path found'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error finding path:', error);
+                resultsDiv.innerHTML = '<div class="error">Failed to find path. Please try again.</div>';
+            } finally {
+                document.getElementById('findPathBtn').disabled = false;
+            }
+        }
+
+        // Display results
+        function displayResults(result, start, end) {
+            const resultsDiv = document.getElementById('results');
+
+            if (result.message) {
+                resultsDiv.innerHTML = `<div class="result-card"><h3>${result.message}</h3></div>`;
+                return;
+            }
+
+            let html = '<div class="result-card">';
+            html += '<h3>✅ Shortest Path Found!</h3>';
+            html += '<ul class="path-list">';
+            
+            result.path.forEach((point, index) => {
+                html += `<li><strong>${index + 1}.</strong> ${point.name}</li>`;
+            });
+            
+            html += '</ul>';
+            html += `<div class="distance">📏 Distance: ${result.distance} km</div>`;
+            html += '</div>';
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Visualize path on map
+        function visualizePath(path) {
+            // Remove existing routing control
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+            if (polyline) {
+                map.removeLayer(polyline);
+                polyline = null;
+            }
+
+            if (path.length === 0) return;
+
+            // Change marker colors based on their role in the path
+            markers.forEach(item => {
+                map.removeLayer(item.marker);
+                
+                const isStart = item.name === path[0].name;
+                const isEnd = item.name === path[path.length - 1].name;
+                const isInPath = path.some(p => p.name === item.name);
+
+                let color;
+                if (isStart) {
+                    color = '#667eea';
+                } else if (isEnd) {
+                    color = '#764ba2';
+                } else if (isInPath) {
+                    color = '#0f0';
+                } else {
+                    color = '#333';
+                }
+
+                // Create colored circle marker
+                const circleMarker = L.circleMarker([item.lat, item.lng], {
+                    radius: 10,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map).bindPopup(item.name);
+
+                item.marker = circleMarker;
+            });
+
+            // Use routing machine to get actual road routes
+            if (path.length >= 2) {
+                // Create waypoints from path
+                const waypoints = path.map(p => L.latLng(p.lat, p.lng));
+                
+                // Create routing control with OSRM provider
+                routingControl = L.Routing.control({
+                    waypoints: waypoints,
+                    routeWhileDragging: false,
+                    show: false, // Hide the default control panel
+                    lineOptions: {
+                        styles: [
+                            {color: '#667eea', opacity: 0.9, weight: 5}
+                        ]
+                    },
+                    createMarker: function() { return null; }, // Hide default markers
+                    router: L.Routing.osrmv1({
+                        serviceUrl: 'https://router.project-osrm.org/route/v1'
+                    })
+                }).addTo(map);
+
+                // Fit map once route is found
+                routingControl.on('routeselected', function(e) {
+                    const route = e.route;
+                    if (route && route.coordinates && route.coordinates.length > 0) {
+                        map.fitBounds(route.coordinates, { padding: [50, 50] });
+                    }
+                });
+            } else {
+                // Fallback to simple polyline for single segment
+                const latlngs = path.map(p => [p.lat, p.lng]);
+                polyline = L.polyline(latlngs, {
+                    color: '#667eea',
+                    weight: 4,
+                    opacity: 0.8,
+                    smoothFactor: 1
+                }).addTo(map);
+                map.fitBounds(latlngs, { padding: [50, 50] });
+            }
+        }
+
+        // Clear map
+        function clearMap() {
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+            if (polyline) {
+                map.removeLayer(polyline);
+                polyline = null;
+            }
+
+            // Reset markers
+            markers.forEach(item => {
+                map.removeLayer(item.marker);
+                const marker = L.marker([item.lat, item.lng])
+                    .addTo(map)
+                    .bindPopup(item.name);
+                item.marker = marker;
+            });
+
+            // Clear results
+            document.getElementById('results').innerHTML = '';
+            map.setView([18.5204, 73.8567], 12);
+        }
+
+        // Event listeners
+        document.getElementById('findPathBtn').addEventListener('click', findShortestPath);
+
+        // Initialize map on load
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>
+
