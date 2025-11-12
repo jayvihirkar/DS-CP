@@ -27,8 +27,10 @@ const graph = {
 function initializeGraph() {
   // VIT Kondhwa Campus connections
   graph['VIT Kondhwa Campus'].neighbors['VIT Bibwewadi Campus'] = 3;
-  graph['VIT Kondhwa Campus'].neighbors['Katraj'] = 8;
+  graph['VIT Kondhwa Campus'].neighbors['Katraj'] = 5;
   graph['VIT Kondhwa Campus'].neighbors['Swargate'] = 7;
+  graph['VIT Kondhwa Campus'].neighbors['Railway Station'] = 8;
+
   
   // VIT Bibwewadi Campus connections
   graph['VIT Bibwewadi Campus'].neighbors['VIT Kondhwa Campus'] = 3;
@@ -40,6 +42,7 @@ function initializeGraph() {
   graph['Swargate'].neighbors['VIT Bibwewadi Campus'] = 6;
   graph['Swargate'].neighbors['Shivaji Nagar'] = 5;
   graph['Swargate'].neighbors['Katraj'] = 12;
+  graph['Swargate'].neighbors['Railway Station'] = 3;
   
   // Shivaji Nagar connections
   graph['Shivaji Nagar'].neighbors['Swargate'] = 5;
