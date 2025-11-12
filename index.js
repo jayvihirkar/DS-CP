@@ -20,7 +20,8 @@ const graph = {
   'Railway Station': { lat: 18.5289, lng: 73.8740, neighbors: {} },
   'Katraj': { lat: 18.4450, lng: 73.8689, neighbors: {} },
   'Sinhgad': { lat: 18.3662, lng: 73.7559, neighbors: {} },
-  'Hinjewadi': { lat: 18.5893, lng: 73.7054, neighbors: {} }
+  'Hinjewadi': { lat: 18.5893, lng: 73.7054, neighbors: {} },
+  'MIT ADT': { lat: 18.49318668349125, lng: 74.02340020910424, neighbors: {} }
 };
 
 // Road network - weighted edges (distances in km)
@@ -31,7 +32,7 @@ function initializeGraph() {
   graph['VIT Kondhwa Campus'].neighbors['Swargate'] = 7;
   graph['VIT Kondhwa Campus'].neighbors['Railway Station'] = 8;
   graph['VIT Kondhwa Campus'].neighbors['Hinjewadi'] = 20;
-
+  graph['VIT Kondhwa Campus'].neighbors['MIT ADT'] = 21;
 
   
   // VIT Bibwewadi Campus connections
