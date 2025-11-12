@@ -30,7 +30,7 @@ function initializeGraph() {
   graph['VIT Kondhwa Campus'].neighbors['Katraj'] = 5;
   graph['VIT Kondhwa Campus'].neighbors['Swargate'] = 7;
   graph['VIT Kondhwa Campus'].neighbors['Railway Station'] = 8;
-  graph['VIT Kondhwa Campus'].neighbors['Hinjewadi'] = 31;
+  graph['VIT Kondhwa Campus'].neighbors['Hinjewadi'] = 20;
 
 
   
