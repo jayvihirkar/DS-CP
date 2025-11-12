@@ -18,7 +18,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1b1b2f 100%);
+            background: linear-gradient(135deg, #0a0f1a 0%, #101828 100%);
             color: #e0e0e0;
             min-height: 100vh;
             display: flex;
@@ -26,15 +26,15 @@
         }
 
         .header {
-            background: rgba(30, 30, 50, 0.95);
+            background: rgba(20, 25, 40, 0.95);
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
             text-align: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid #333;
         }
 
         .header h1 {
-            color: #a78bfa;
+            color: #3b82f6;
             font-size: 2rem;
             margin-bottom: 5px;
         }
@@ -89,12 +89,12 @@
 
         .control-group select:focus {
             outline: none;
-            border-color: #a78bfa;
+            border-color: #3b82f6;
         }
 
         .btn {
             padding: 12px 24px;
-            background: linear-gradient(135deg, #6d28d9 0%, #9333ea 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -106,7 +106,7 @@
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(147, 51, 234, 0.5);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
         }
 
         .btn:active {
@@ -125,14 +125,14 @@
 
         .result-card {
             background: #2a2a3d;
-            border-left: 4px solid #a78bfa;
+            border-left: 4px solid #3b82f6;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
         }
 
         .result-card h3 {
-            color: #a78bfa;
+            color: #3b82f6;
             margin-bottom: 10px;
             font-size: 1.1rem;
         }
@@ -161,7 +161,7 @@
         .distance {
             font-size: 1.2rem;
             font-weight: bold;
-            color: #a78bfa;
+            color: #3b82f6;
             margin-top: 10px;
             padding: 10px;
             background: #1f1f2e;
@@ -194,7 +194,7 @@
 
         .legend h4 {
             margin-bottom: 10px;
-            color: #a78bfa;
+            color: #3b82f6;
         }
 
         .legend-item {
@@ -223,7 +223,7 @@
         .loading {
             text-align: center;
             padding: 20px;
-            color: #a78bfa;
+            color: #3b82f6;
             font-weight: 600;
         }
 
@@ -262,19 +262,19 @@
             <div class="legend">
                 <h4>Legend</h4>
                 <div class="legend-item">
-                    <span class="legend-marker" style="background: #667eea;"></span>
+                    <span class="legend-marker" style="background: #00ff88;"></span>
                     <span>Starting Point</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-marker" style="background: #764ba2;"></span>
-                    <span>Destination</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-marker" style="background: #0f0;"></span>
+                    <span class="legend-marker" style="background: #3b82f6;"></span>
                     <span>Path</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-marker" style="background: #ddd;"></span>
+                    <span class="legend-marker" style="background: #ef4444;"></span>
+                    <span>Destination</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker" style="background: #888;"></span>
                     <span>Other Locations</span>
                 </div>
             </div>
@@ -427,13 +427,13 @@
 
                 let color;
                 if (isStart) {
-                    color = '#667eea';
+                    color = '#00ff88'; // green
                 } else if (isEnd) {
-                    color = '#764ba2';
+                    color = '#ef4444'; // red
                 } else if (isInPath) {
-                    color = '#0f0';
+                    color = '#3b82f6'; // blue
                 } else {
-                    color = '#ddd';
+                    color = '#888'; // gray
                 }
 
                 const circleMarker = L.circleMarker([item.lat, item.lng], {
@@ -457,7 +457,7 @@
                     show: false,
                     lineOptions: {
                         styles: [
-                            {color: '#a78bfa', opacity: 0.9, weight: 5}
+                            {color: '#3b82f6', opacity: 0.9, weight: 5}
                         ]
                     },
                     createMarker: function() { return null; },
@@ -475,7 +475,7 @@
             } else {
                 const latlngs = path.map(p => [p.lat, p.lng]);
                 polyline = L.polyline(latlngs, {
-                    color: '#a78bfa',
+                    color: '#3b82f6',
                     weight: 4,
                     opacity: 0.8,
                     smoothFactor: 1
@@ -510,6 +510,9 @@
 
         window.addEventListener('load', initMap);
     </script>
+</body>
+</html>
+
 </body>
 </html>
 
