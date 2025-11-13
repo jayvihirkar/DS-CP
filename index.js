@@ -18,16 +18,17 @@ const graph = {
   'Swargate': { lat: 18.5011, lng: 73.8627, neighbors: {} },
   'Shivaji Nagar': { lat: 18.5302, lng: 73.8526, neighbors: {} },
   'Railway Station': { lat: 18.5289, lng: 73.8740, neighbors: {} },
-  'Katraj': { lat: 18.4450, lng: 73.8689, neighbors: {} },
+  'Katraj': { lat: 18.448198224959548, lng: 73.85848909610095, neighbors: {} },
   'Sinhgad': { lat: 18.3662, lng: 73.7559, neighbors: {} },
   'Hinjewadi': { lat: 18.5893, lng: 73.7054, neighbors: {} },
-  'MIT ADT': { lat: 18.49318668349125, lng: 74.02340020910424, neighbors: {} }
+  'MIT ADT': { lat: 18.49318668349125, lng: 74.02340020910424, neighbors: {} },
+  'Upper Depot': { lat: 18.46109567280875, lng: 73.8720547245966, neighbors:{} }
 };
 
 // Road network - weighted edges (distances in km)
 function initializeGraph() {
   // VIT Kondhwa Campus connections
-  graph['VIT Kondhwa Campus'].neighbors['VIT Bibwewadi Campus'] = 3;
+  graph['VIT Kondhwa Campus'].neighbors['Upper Depot'] = 1.5;
   graph['VIT Kondhwa Campus'].neighbors['Katraj'] = 5;
   graph['VIT Kondhwa Campus'].neighbors['Swargate'] = 7;
   graph['VIT Kondhwa Campus'].neighbors['Railway Station'] = 8;
@@ -36,7 +37,7 @@ function initializeGraph() {
 
   
   // VIT Bibwewadi Campus connections
-  graph['VIT Bibwewadi Campus'].neighbors['VIT Kondhwa Campus'] = 3;
+  graph['VIT Bibwewadi Campus'].neighbors['Upper Depot'] = 0.9;
   graph['VIT Bibwewadi Campus'].neighbors['Swargate'] = 6;
   graph['VIT Bibwewadi Campus'].neighbors['Katraj'] = 8;
   
@@ -70,6 +71,11 @@ function initializeGraph() {
   graph['Hinjewadi'].neighbors['Railway Station'] = 18;
   graph['Hinjewadi'].neighbors['Shivaji Nagar'] = 14;
   graph['Hinjewadi'].neighbors['Sinhgad'] = 20;
+
+  // Upper Depot connections
+  graph['Upper Depot'].neighbors['VIT Bibwewadi Campus'] = 0.8;
+  graph['Upper Depot'].neighbors['VIT Kondhwa Campus'] = 1.6;
+  graph['Upper Depot'].neighbors['Katraj'] = 1.6;
 }
 
 // Initialize the graph
