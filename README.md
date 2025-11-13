@@ -1,4 +1,4 @@
-# Shortest Distance Web App - Pune VIT Region
+# Shortest Distance Web App
 
 A web application to find the shortest path between locations in Pune, focusing on VIT campuses and surrounding areas using **Dijkstra's Algorithm**.
 
