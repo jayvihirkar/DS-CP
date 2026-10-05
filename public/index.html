@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shortest Route - Pune VIT Region</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: Inter, Segoe UI, sans-serif; color: #e9eefb; background: #0b1220; }
+    header { padding: 1.25rem 1.5rem; text-align: center; background: #111c31; border-bottom: 1px solid #2b3a56; }
+    h1 { margin: 0; color: #7db2ff; font-size: 1.7rem; } header p { margin: .35rem 0 0; color: #bbc8dd; }
+    main { display: grid; grid-template-columns: 365px minmax(0, 1fr); gap: 1.25rem; max-width: 1600px; min-height: calc(100vh - 100px); margin: auto; padding: 1.25rem; }
+    aside, .map-shell { background: #121d31; border: 1px solid #2b3a56; border-radius: 12px; box-shadow: 0 8px 24px #0004; }
+    aside { padding: 1.25rem; overflow-y: auto; } .panel { padding-bottom: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid #2b3a56; }
+    .panel:last-child { border: 0; margin: 0; padding: 0; } h2 { margin: 0 0 .85rem; font-size: 1.05rem; color: #9dc3ff; }
+    label { display: block; margin: .75rem 0 .3rem; font-size: .9rem; font-weight: 600; color: #cbd5e1; }
+    input, select, button { width: 100%; padding: .7rem; border-radius: 7px; font: inherit; }
+    input, select { color: #eef4ff; background: #1c2a44; border: 1px solid #3a4e70; }
+    button { margin-top: 1rem; color: #fff; cursor: pointer; font-weight: 700; border: 0; background: linear-gradient(135deg, #2563eb, #3b82f6); }
+    button:hover { filter: brightness(1.1); } button:disabled { cursor: wait; filter: grayscale(.6); }
+    .secondary { background: #34445f; } .notice, .result { margin-top: 1rem; padding: .85rem; border-radius: 8px; line-height: 1.45; }
+    .notice { background: #273650; color: #d6e4fb; } .error { background: #52242e; color: #ffd6db; } .result { background: #172845; border-left: 4px solid #60a5fa; }
+    .result strong { color: #9dc3ff; } .route { margin: .6rem 0 0; padding-left: 1.1rem; } .stats { margin-top: .65rem; color: #c7d8ef; font-size: .9rem; }
+    .map-shell { overflow: hidden; } #map { height: 100%; min-height: 650px; } .hint { color: #aebbd0; font-size: .82rem; margin: .45rem 0 0; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } #map { min-height: 500px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Shortest Route Explorer</h1>
+    <p>Pune VIT region - compare Dijkstra and haversine-guided A*</p>
+  </header>
+  <main>
+    <aside>
+      <section class="panel">
+        <h2>Find a route</h2>
+        <label for="startLocation">Starting landmark</label><select id="startLocation"></select>
+        <label for="endLocation">Destination</label><select id="endLocation"></select>
+        <label for="algorithm">Search engine</label>
+        <select id="algorithm">
+          <option value="astar">A* (haversine)</option>
+          <option value="heap">Dijkstra (binary heap)</option>
+          <option value="linear">Dijkstra (linear scan)</option>
+        </select>
+        <button id="findPathBtn">Find shortest route</button>
+        <button id="clearBtn" class="secondary">Clear route</button>
+        <div id="results" aria-live="polite"></div>
+      </section>
+      <section class="panel">
+        <h2>Add a landmark</h2>
+        <form id="landmarkForm">
+          <label for="landmarkName">Name</label><input id="landmarkName" required maxlength="80" placeholder="e.g. Library">
+          <label for="latitude">Latitude</label><input id="latitude" type="number" step="any" required placeholder="18.4600">
+          <label for="longitude">Longitude</label><input id="longitude" type="number" step="any" required placeholder="73.8700">
+          <label for="connectTo">Connect to</label><select id="connectTo" required></select>
+          <label for="roadDistance">Road distance (km)</label><input id="roadDistance" type="number" min="0.001" step="0.001" required placeholder="1.2">
+          <p class="hint">Road distance must not be shorter than the direct geographic distance, preserving A* optimality.</p>
+          <button type="submit">Add landmark</button>
+        </form>
+        <div id="addMessage" aria-live="polite"></div>
+      </section>
+    </aside>
+    <section class="map-shell"><div id="map" aria-label="Map of Pune landmarks"></div></section>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+  <script>
+    let map, locations = {}, markers = [], routingControl = null;
+    const byId = id => document.getElementById(id);
+
+    function showMessage(id, text, error = false) {
+      const box = byId(id); box.className = error ? 'notice error' : 'notice'; box.textContent = text;
+    }
+    function clearMessage(id) { const box = byId(id); box.className = ''; box.textContent = ''; }
+    function setOptions(select, selected) {
+      select.replaceChildren();
+      Object.keys(locations).forEach(name => {
+        const option = document.createElement('option'); option.value = name; option.textContent = name;
+        option.selected = name === selected; select.append(option);
+      });
+    }
+    function renderMarkers(route = []) {
+      markers.forEach(marker => map.removeLayer(marker)); markers = [];
+      const routeNames = route.map(point => point.name);
+      Object.entries(locations).forEach(([name, point]) => {
+        const isStart = name === routeNames[0]; const isEnd = name === routeNames.at(-1);
+        const color = isStart ? '#22c55e' : isEnd ? '#ef4444' : routeNames.includes(name) ? '#3b82f6' : '#94a3b8';
+        markers.push(L.circleMarker([point.lat, point.lng], { radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: .9 })
+          .addTo(map).bindPopup(name));
+      });
+    }
+    async function refreshLocations() {
+      const previousStart = byId('startLocation').value; const previousEnd = byId('endLocation').value;
+      const response = await fetch('/api/locations'); locations = await response.json();
+      setOptions(byId('startLocation'), previousStart); setOptions(byId('endLocation'), previousEnd); setOptions(byId('connectTo'));
+      if (byId('startLocation').value === byId('endLocation').value && Object.keys(locations).length > 1) byId('endLocation').selectedIndex = 1;
+      renderMarkers();
+    }
+    function removeRouteLayer() {
+      if (routingControl) { map.removeControl(routingControl); routingControl = null; }
+    }
+    function clearRoute() {
+      removeRouteLayer();
+      renderMarkers(); clearMessage('results'); map.setView([18.5204, 73.8567], 12);
+    }
+    function displayResult(result) {
+      const container = byId('results'); container.className = 'result'; container.replaceChildren();
+      const title = document.createElement('strong'); title.textContent = result.message || 'Shortest route found'; container.append(title);
+      if (!result.message) {
+        const list = document.createElement('ol'); list.className = 'route'; result.path.forEach(point => { const item = document.createElement('li'); item.textContent = point.name; list.append(item); }); container.append(list);
+        const stats = document.createElement('div'); stats.className = 'stats'; stats.textContent = `${result.algorithmLabel} - ${result.distance.toFixed(3)} km - ${result.settledVertices} vertices settled`; container.append(stats);
+      }
+    }
+    function showRoute(path) {
+      removeRouteLayer(); renderMarkers(path);
+      if (path.length < 2) return;
+      routingControl = L.Routing.control({ waypoints: path.map(point => L.latLng(point.lat, point.lng)), routeWhileDragging: false, show: false,
+        lineOptions: { styles: [{ color: '#3b82f6', opacity: .9, weight: 5 }] }, createMarker: () => null,
+        router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }) }).addTo(map);
+      routingControl.on('routeselected', event => map.fitBounds(event.route.coordinates, { padding: [40, 40] }));
+    }
+    async function findPath() {
+      const button = byId('findPathBtn'); button.disabled = true; showMessage('results', 'Finding shortest route...');
+      try {
+        const response = await fetch('/api/shortest-path', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ start: byId('startLocation').value, end: byId('endLocation').value, algorithm: byId('algorithm').value }) });
+        const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Route request failed.');
+        displayResult(result); showRoute(result.path);
+      } catch (error) { showMessage('results', error.message, true); } finally { button.disabled = false; }
+    }
+    async function addLandmark(event) {
+      event.preventDefault(); const form = event.currentTarget; const button = form.querySelector('button'); button.disabled = true; clearMessage('addMessage');
+      const payload = { name: byId('landmarkName').value, lat: byId('latitude').value, lng: byId('longitude').value, connectTo: byId('connectTo').value, distance: byId('roadDistance').value };
+      try {
+        const response = await fetch('/api/locations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Unable to add landmark.');
+        form.reset(); await refreshLocations(); showMessage('addMessage', `${result.location.name} has been added to the graph.`);
+      } catch (error) { showMessage('addMessage', error.message, true); } finally { button.disabled = false; }
+    }
+    window.addEventListener('load', async () => {
+      map = L.map('map').setView([18.5204, 73.8567], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+      try { await refreshLocations(); } catch { showMessage('results', 'Could not load locations. Start the server and reload the page.', true); }
+      byId('findPathBtn').addEventListener('click', findPath); byId('clearBtn').addEventListener('click', clearRoute); byId('landmarkForm').addEventListener('submit', addLandmark);
+    });
+  </script>
+</body>
+</html>
